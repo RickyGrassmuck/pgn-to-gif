@@ -1,0 +1,19 @@
+square.light {
+  stroke: yellow;
+  fill: yellow;
+}
+
+square.dark {
+  stroke: black;
+  fill: black;
+}
+
+circle {
+  stroke: red;
+  fill: red;
+}
+
+arrow {
+  stroke: blue;
+  fill: blue;
+}

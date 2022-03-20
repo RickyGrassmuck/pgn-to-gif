@@ -1,0 +1,17 @@
+[Event "Europe Tournament (corr.)"]
+[Site "corr."]
+[Date "1977.??.??"]
+[Round "?"]
+[White "Hottrup JL"]
+[Black "Butze Roland"]
+[Result "0-1"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. e3 c6 6. Nf3 Qa5 7. Bd3 Ne4 8. Qa4
+Qxa4 9. Nxa4 Nxg5 10. Nxg5 dxc4 11. Be2 Bb4+ 12. Nc3 b5 13. O-O Be7 14. Nh3 Nb6
+15. Bf3 Nd5 16. Rfc1 Bb7 17. a3 a6 18. Ne4 O-O 19. Kf1 Rfc8 20. Ng1 c5 21. Ne2
+cxd4 22. Nxd4 Bc5 23. Nb3 Bxe3 24. fxe3 {[%cal dc4b3][%c_arrow
+c4b3;keyPressed;none;from;c4;opacity;0.8;to;b3;persistent;false]} 24... cxb3 25.
+Ke2 {[%cal dd5b6][%c_arrow
+d5b6;keyPressed;none;from;d5;opacity;0.8;to;b6;persistent;false]} 25... Nb6
+{[%cal dc1c8][%c_arrow
+c1c8;keyPressed;none;from;c1;opacity;0.8;to;c8;persistent;false]} 0-1
