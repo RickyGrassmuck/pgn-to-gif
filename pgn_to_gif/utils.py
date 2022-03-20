@@ -3,6 +3,7 @@ from io import StringIO
 from multiprocessing import Pool
 from pathlib import Path
 from tempfile import TemporaryFile
+import re
 import cairosvg
 import chess
 import chess.pgn
@@ -38,13 +39,39 @@ def pgn_to_game(pgn: str) -> chess.pgn.Game:
         chess.pgn.Game: chess game
     """
     game = chess.pgn.read_game(StringIO(pgn))
+    normalize_comments(game)
+
     return game
+
+
+def normalize_comments(game: Iterable[chess.pgn.ChildNode]) -> str:
+    for move in game.mainline():
+        if move.comment:
+            normalized = fix_arrow_comment(move.comment)
+            move.comment = normalized
+        move.arrows()
+
+
+def fix_arrow_comment(comment: str) -> str:
+    arrows = re.compile(r"\[%cal\s([a-h1-8,]*)](.*\s.*)", re.VERBOSE)
+    fixed = []
+    other_comments = ""
+    for item in arrows.finditer(comment):
+        other_comments = item.group(2)
+        for arrow in item.group(1).split(","):
+            if len(arrow) > 4 and arrow.startswith("d"):
+                fixed.append(f"G{arrow.removeprefix('d')}")
+            else:
+                fixed.append(arrow)
+    return f"[%cal {','.join(fixed)}]{other_comments}"
 
 
 def game_to_boards_and_last_moves(
     game: chess.pgn.Game,
     add_initial_position: bool = True,
-) -> Generator[Tuple[chess.Board, Optional[chess.Move]], None, None]:
+) -> Generator[
+    Tuple[chess.Board, Optional[chess.Move]], None, Optional[Iterable[chess.svg.Arrow]]
+]:
     """Return generator of chess board and last move after each move for given chess game
 
     Args:
@@ -55,15 +82,17 @@ def game_to_boards_and_last_moves(
         Generator[Tuple[chess.Board, Optional[chess.Move]], None, None]: generator of chess board and last move
     """
     if add_initial_position:
-        yield chess.Board(), None
+        yield chess.Board(), None, []
+
     for move, game_node in zip(game.mainline_moves(), game.mainline()):
-        yield game_node.board(), move
+        yield game_node.board(), move, game_node.arrows()
 
 
 def board_to_svg(
     board: chess.Board,
     orientation: chess.Color = chess.WHITE,
     last_move: Optional[chess.Move] = None,
+    arrows: Optional[Iterable[chess.svg.Arrow]] = [],
     size: int = 400,
     coordinates: bool = True,
     style: Optional[str] = None,
@@ -88,6 +117,7 @@ def board_to_svg(
         board,
         orientation=orientation,
         lastmove=last_move,
+        arrows=arrows,
         size=size,
         coordinates=coordinates,
         style=style,
@@ -170,7 +200,7 @@ def save_gif_temp_file(temp_file: TemporaryFile, path: Union[Path, str]) -> None
 
 def game_to_gif(
     game: chess.pgn.Game,
-    gif_path: Optional[Union[Path, str]] = None,
+    output_file: Optional[Union[Path, str]] = None,
     add_initial_position: bool = True,
     highlight_last_move: bool = True,
     orientation: chess.Color = chess.WHITE,
@@ -188,7 +218,7 @@ def game_to_gif(
 
     Args:
         game (chess.pgn.Game): chess game
-        gif_path (Optional[Union[Path, str]], optional): path to save gif. defaults to None.
+        output_file (Optional[Union[Path, str]], optional): path to save gif. defaults to None.
         add_initial_position (bool, optional): add initial position. defaults to True.
         highlight_last_move (bool, optional): highlight last move. defaults to True.
         orientation (chess.Color, optional): orientation of chess board. defaults to chess.WHITE.
@@ -212,11 +242,12 @@ def game_to_gif(
             board,
             orientation,
             last_move if highlight_last_move else None,
+            arrows,
             size,
             coordinates,
             style,
         )
-        for board, last_move in boards_and_last_moves
+        for board, last_move, arrows in boards_and_last_moves
     )
 
     if processes > 1:
@@ -234,15 +265,16 @@ def game_to_gif(
         subrectangles,
     )
 
-    if gif_path is not None:
-        save_gif_temp_file(gif_temp_file, gif_path)
+    if output_file is not None:
+        save_gif_temp_file(gif_temp_file, output_file)
+        print(f"GIF saved to: {output_file}")
     else:
         return gif_temp_file
 
 
 def pgn_to_gif(
     pgn: str,
-    gif_path: Optional[Union[Path, str]] = None,
+    output_file: Optional[Union[Path, str]] = None,
     add_initial_position: bool = True,
     highlight_last_move: bool = True,
     orientation: chess.Color = chess.WHITE,
@@ -260,7 +292,7 @@ def pgn_to_gif(
 
     Args:
         pgn (str): chess game pgn
-        gif_path (Optional[Union[Path, str]], optional): path to save gif. defaults to None.
+        output_file (Optional[Union[Path, str]], optional): path to save gif. defaults to None.
         add_initial_position (bool, optional): add initial position. defaults to True.
         highlight_last_move (bool, optional): highlight last move. defaults to True.
         orientation (chess.Color, optional): orientation of chess board. defaults to chess.WHITE.
@@ -281,7 +313,7 @@ def pgn_to_gif(
     game = pgn_to_game(pgn)
     return game_to_gif(
         game,
-        gif_path,
+        output_file,
         add_initial_position,
         highlight_last_move,
         orientation,

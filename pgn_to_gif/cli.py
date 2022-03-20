@@ -1,8 +1,9 @@
 from typing import Literal, Optional, Sequence
 import argparse
 from pathlib import Path
-from .utils import read_css, read_pgn, pgn_to_gif
+from .utils import *
 import chess
+import pyperclip
 
 
 def parse_orientation(orientation: Literal["white", "black"]) -> chess.Color:
@@ -14,47 +15,47 @@ def parse_orientation(orientation: Literal["white", "black"]) -> chess.Color:
         raise ValueError(f"unknown {orientation=}")
 
 
-def parse_bool(bool_str: Literal["1", "t", "true", "0", "f", "false"]) -> bool:
-    true_values = ["1", "t", "true"]
-    false_values = ["0", "f", "false"]
-    if bool_str.lower() in true_values:
-        return True
-    elif bool_str.lower() in false_values:
-        return False
-    else:
-        raise ValueError(f"cannot parse to bool, {bool_str}")
-
-
 def main(argv: Optional[Sequence[str]] = None) -> None:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument(
-        "--pgn-path",
-        dest="pgn_path",
-        required=True,
+    pgn_sources = parser.add_mutually_exclusive_group()
+
+    pgn_sources.add_argument(
+        "--input-file",
+        dest="input_file",
         type=Path,
         help="path to pgn file to read",
     )
     parser.add_argument(
-        "--gif-path",
-        dest="gif_path",
-        required=True,
+        "--output-file",
+        dest="output_file",
+        default="./game.gif",
         type=Path,
         help="path to gif file to save",
+    )
+    pgn_sources.add_argument(
+        "--from-clipboard",
+        dest="from_clipboard",
+        action="store_const",
+        default=False,
+        const=True,
+        help="Read PGN from clipboard",
     )
     parser.add_argument(
         "--add-initial-position",
         dest="add_initial_position",
-        default="true",
-        choices=["1", "t", "true", "0", "f", "false"],
+        default=True,
+        action="store_const",
+        const=True,
         help="add initial position to gif",
     )
     parser.add_argument(
         "--highlight-last-move",
         dest="highlight_last_move",
-        default="true",
-        choices=["1", "t", "true", "0", "f", "false"],
+        default=False,
+        action="store_const",
+        const=True,
         help="highlight last move on board",
     )
     parser.add_argument(
@@ -71,7 +72,8 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         "--coordinates",
         dest="coordinates",
         default="true",
-        choices=["1", "t", "true", "0", "f", "false"],
+        action="store_const",
+        const=True,
         help="add board coordinates",
     )
     parser.add_argument(
@@ -108,8 +110,8 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     parser.add_argument(
         "--subrectangles",
         dest="subrectangles",
-        default="true",
-        choices=["1", "t", "true", "0", "f", "false"],
+        action="store_const",
+        const=True,
         help="optimize gif by storing change",
     )
     parser.add_argument(
@@ -122,16 +124,23 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
 
     args = parser.parse_args(argv)
 
-    pgn = read_pgn(args.pgn_path)
+    if (not args.from_clipboard) and (not args.input_file):
+        parser.error('Must specify either "--from-clipboard" or "--input_file"')
+
+    if args.from_clipboard:
+        pgn = pyperclip.paste()
+    else:
+        pgn = read_pgn(args.input_file)
+
     style = None if args.css_path is None else read_css(args.css_path)
     orientation = parse_orientation(args.orientation)
-    add_initial_position = parse_bool(args.add_initial_position)
-    highlight_last_move = parse_bool(args.highlight_last_move)
-    coordinates = parse_bool(args.coordinates)
-    subrectangles = parse_bool(args.subrectangles)
+    add_initial_position = args.add_initial_position
+    highlight_last_move = args.highlight_last_move
+    coordinates = args.coordinates
+    subrectangles = args.subrectangles
     pgn_to_gif(
         pgn,
-        args.gif_path,
+        args.output_file,
         add_initial_position,
         highlight_last_move,
         orientation,
@@ -143,7 +152,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         args.fps,
         args.palettesize,
         subrectangles,
-        args.processes
+        args.processes,
     )
 
 
