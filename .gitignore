@@ -2,4 +2,4 @@
 .venv_dev/
 __pycache__/
 
-*.gif
+game.gif

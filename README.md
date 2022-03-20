@@ -1,11 +1,17 @@
 # pgn-to-gif
+
 Generate GIFs of chess games from PGN files.
 
 ## Installation
+
 `pip3 install pgn-to-gif`
 
+## Example output
+![Custom CSS + Arrow display](examples/arrows-custom-css/out.gif)
+
 ## Usage
-```
+
+```shell
 usage: cli.py [-h] [--input-file INPUT_FILE] [--output-file OUTPUT_FILE] [--from-clipboard] [--add-initial-position]
               [--highlight-last-move] [--orientation {white,black}] [--size SIZE] [--coordinates]
               [--css-path CSS_PATH] [--loop LOOP] [--duration DURATION] [--fps FPS] [--palettesize PALETTESIZE]
@@ -37,5 +43,4 @@ options:
                         number of processes when converting svgs to pngs (default: 1)
 ```
 
-## Examples
 Please see [examples](https://github.com/afozk95/pgn-to-gif/tree/master/examples) folder.
