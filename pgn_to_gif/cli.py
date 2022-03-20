@@ -1,7 +1,7 @@
 from typing import Literal, Optional, Sequence
 import argparse
 from pathlib import Path
-from .utils import *
+import utils
 import chess
 import pyperclip
 
@@ -130,15 +130,15 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     if args.from_clipboard:
         pgn = pyperclip.paste()
     else:
-        pgn = read_pgn(args.input_file)
+        pgn = utils.read_pgn(args.input_file)
 
-    style = None if args.css_path is None else read_css(args.css_path)
+    style = None if args.css_path is None else utils.read_css(args.css_path)
     orientation = parse_orientation(args.orientation)
     add_initial_position = args.add_initial_position
     highlight_last_move = args.highlight_last_move
     coordinates = args.coordinates
     subrectangles = args.subrectangles
-    pgn_to_gif(
+    utils.pgn_to_gif(
         pgn,
         args.output_file,
         add_initial_position,
